@@ -1,0 +1,99 @@
+type CreateDairyFarmPayload = record {
+  contact : text;
+  owner : text;
+  name : text;
+  total_cows : nat64;
+  email : text;
+  location : text;
+};
+type DairyAnimal = record {
+  id : nat64;
+  age : nat64;
+  tag_number : text;
+  health_status : text;
+  breed : text;
+  milk_yield : float64;
+  dairy_farm_id : nat64;
+};
+type DairyFarm = record {
+  id : nat64;
+  contact : text;
+  owner : text;
+  name : text;
+  total_cows : nat64;
+  created_at : nat64;
+  email : text;
+  location : text;
+};
+type Expense = record {
+  id : nat64;
+  date : nat64;
+  description : text;
+  category : text;
+  amount : float64;
+  dairy_farm_id : nat64;
+};
+type Feed = record {
+  id : nat64;
+  feed_type : text;
+  cost : float64;
+  date : nat64;
+  quantity : float64;
+  dairy_farm_id : nat64;
+};
+type Message = variant {
+  Error : text;
+  InvalidPayload : text;
+  NotFound : text;
+  Success : text;
+};
+type MilkProduction = record {
+  id : nat64;
+  remaining_milk : float64;
+  sold_milk : float64;
+  revenue : float64;
+  date : nat64;
+  total_milk : float64;
+  dairy_farm_id : nat64;
+};
+type RecordExpensePayload = record {
+  description : text;
+  category : text;
+  amount : float64;
+  dairy_farm_id : nat64;
+};
+type RecordFeedPayload = record {
+  feed_type : text;
+  cost : float64;
+  quantity : float64;
+  dairy_farm_id : nat64;
+};
+type RecordMilkProductionPayload = record {
+  sold_milk : float64;
+  revenue_per_liter : float64;
+  total_milk : float64;
+  dairy_farm_id : nat64;
+};
+type RegisterDairyAnimalPayload = record {
+  age : nat64;
+  tag_number : text;
+  breed : text;
+  milk_yield : float64;
+  dairy_farm_id : nat64;
+};
+type Result = variant { Ok : float64; Err : Message };
+type Result_1 = variant { Ok : DairyFarm; Err : Message };
+type Result_2 = variant { Ok : Expense; Err : Message };
+type Result_3 = variant { Ok : Feed; Err : Message };
+type Result_4 = variant { Ok : MilkProduction; Err : Message };
+type Result_5 = variant { Ok : DairyAnimal; Err : Message };
+service : {
+  calculate_total_expenses : (nat64) -> (Result) query;
+  calculate_total_feed_cost : (nat64) -> (Result) query;
+  calculate_total_revenue : (nat64) -> (Result) query;
+  create_dairy_farm : (CreateDairyFarmPayload) -> (Result_1);
+  record_expense : (RecordExpensePayload) -> (Result_2);
+  record_feed : (RecordFeedPayload) -> (Result_3);
+  record_milk_production : (RecordMilkProductionPayload) -> (Result_4);
+  register_dairy_animal : (RegisterDairyAnimalPayload) -> (Result_5);
+}
