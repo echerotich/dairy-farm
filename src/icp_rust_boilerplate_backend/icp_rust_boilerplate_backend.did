@@ -83,17 +83,23 @@ type RegisterDairyAnimalPayload = record {
 };
 type Result = variant { Ok : float64; Err : Message };
 type Result_1 = variant { Ok : DairyFarm; Err : Message };
-type Result_2 = variant { Ok : Expense; Err : Message };
-type Result_3 = variant { Ok : Feed; Err : Message };
-type Result_4 = variant { Ok : MilkProduction; Err : Message };
-type Result_5 = variant { Ok : DairyAnimal; Err : Message };
+type Result_2 = variant { Ok : vec MilkProduction; Err : Message };
+type Result_3 = variant { Ok : vec DairyAnimal; Err : Message };
+type Result_4 = variant { Ok : Expense; Err : Message };
+type Result_5 = variant { Ok : Feed; Err : Message };
+type Result_6 = variant { Ok : MilkProduction; Err : Message };
+type Result_7 = variant { Ok : DairyAnimal; Err : Message };
 service : {
+  calculate_average_milk_yield : (nat64) -> (Result) query;
   calculate_total_expenses : (nat64) -> (Result) query;
   calculate_total_feed_cost : (nat64) -> (Result) query;
   calculate_total_revenue : (nat64) -> (Result) query;
   create_dairy_farm : (CreateDairyFarmPayload) -> (Result_1);
-  record_expense : (RecordExpensePayload) -> (Result_2);
-  record_feed : (RecordFeedPayload) -> (Result_3);
-  record_milk_production : (RecordMilkProductionPayload) -> (Result_4);
-  register_dairy_animal : (RegisterDairyAnimalPayload) -> (Result_5);
+  generate_milk_production_report : (nat64) -> (Result_2) query;
+  list_animals_for_farm : (nat64) -> (Result_3) query;
+  list_dairy_farms : () -> (vec DairyFarm) query;
+  record_expense : (RecordExpensePayload) -> (Result_4);
+  record_feed : (RecordFeedPayload) -> (Result_5);
+  record_milk_production : (RecordMilkProductionPayload) -> (Result_6);
+  register_dairy_animal : (RegisterDairyAnimalPayload) -> (Result_7);
 }

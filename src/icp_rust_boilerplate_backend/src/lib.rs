@@ -6,6 +6,7 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::{BoundedStorable, Cell, DefaultMemoryImpl, StableBTreeMap, Storable};
 use std::{borrow::Cow, cell::RefCell};
 
+// Type aliases for memory management
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 type IdCell = Cell<u64, Memory>;
 
@@ -237,21 +238,32 @@ thread_local! {
         ));
 }
 
-// Functions
+// Utility functions
+fn increment_id() -> u64 {
+    ID_COUNTER
+        .with(|counter| {
+            let current_value = *counter.borrow().get();
+            counter.borrow_mut().set(current_value + 1).unwrap();
+            current_value
+        })
+}
 
-// Create Dairy Farm
+fn is_valid_email(email: &str) -> bool {
+    email.contains('@') && email.contains('.')
+}
+
+// Improved Functions
 #[ic_cdk::update]
 fn create_dairy_farm(payload: CreateDairyFarmPayload) -> Result<DairyFarm, Message> {
     if payload.name.is_empty() || payload.contact.is_empty() || payload.email.is_empty() {
         return Err(Message::InvalidPayload("Missing required fields".to_string()));
     }
 
-    let dairy_farm_id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Counter increment failed");
+    if !is_valid_email(&payload.email) {
+        return Err(Message::InvalidPayload("Invalid email format".to_string()));
+    }
+
+    let dairy_farm_id = increment_id();
 
     let dairy_farm = DairyFarm {
         id: dairy_farm_id,
@@ -269,6 +281,65 @@ fn create_dairy_farm(payload: CreateDairyFarmPayload) -> Result<DairyFarm, Messa
     });
 
     Ok(dairy_farm)
+}
+
+#[ic_cdk::query]
+fn list_dairy_farms() -> Vec<DairyFarm> {
+    DAIRY_FARMS.with(|farms| {
+        farms.borrow().iter().map(|(_, farm)| farm.clone()).collect()
+    })
+}
+
+#[ic_cdk::query]
+fn list_animals_for_farm(dairy_farm_id: u64) -> Result<Vec<DairyAnimal>, Message> {
+    let farm_exists = DAIRY_FARMS.with(|farms| farms.borrow().contains_key(&dairy_farm_id));
+    if !farm_exists {
+        return Err(Message::NotFound("Dairy farm not found".to_string()));
+    }
+
+    let animals: Vec<DairyAnimal> = DAIRY_ANIMALS.with(|animals| {
+        animals
+            .borrow()
+            .iter()
+            .filter(|(_, animal)| animal.dairy_farm_id == dairy_farm_id)
+            .map(|(_, animal)| animal.clone())
+            .collect()
+    });
+
+    Ok(animals)
+}
+
+#[ic_cdk::query]
+fn calculate_average_milk_yield(dairy_farm_id: u64) -> Result<f64, Message> {
+    let animals = list_animals_for_farm(dairy_farm_id)?;
+
+    if animals.is_empty() {
+        return Err(Message::NotFound("No animals registered for this farm".to_string()));
+    }
+
+    let total_yield: f64 = animals.iter().map(|animal| animal.milk_yield).sum();
+    let average_yield = total_yield / animals.len() as f64;
+
+    Ok(average_yield)
+}
+
+#[ic_cdk::query]
+fn generate_milk_production_report(dairy_farm_id: u64) -> Result<Vec<MilkProduction>, Message> {
+    let farm_exists = DAIRY_FARMS.with(|farms| farms.borrow().contains_key(&dairy_farm_id));
+    if !farm_exists {
+        return Err(Message::NotFound("Dairy farm not found".to_string()));
+    }
+
+    let report: Vec<MilkProduction> = MILK_PRODUCTIONS.with(|productions| {
+        productions
+            .borrow()
+            .iter()
+            .filter(|(_, production)| production.dairy_farm_id == dairy_farm_id)
+            .map(|(_, production)| production.clone())
+            .collect()
+    });
+
+    Ok(report)
 }
 
 // Register Dairy Animal
